@@ -5,20 +5,19 @@
 (import [urllib.parse [urlparse]])
 
 (import [celery [Celery]])
-;(import [prosaic.nyarlathotep [process-txt!]])
+(import [prosaic.nyarlathotep [process-txt!]])
 (import [pymongo [MongoClient]])
 (import [redis [StrictRedis]])
 (import requests)
 
-(import [cfg [cfg]])
+(import [scamall.cfg [cfg]])
 
-;; TODO might need kwapply
-(def *celery* (Celery "crawl" (% "redis://%s:%s" (cfg "redis_host") (cfg "redis_port"))))
+(def *celery* (Celery "crawl" (.format "redis://{}:{}" (cfg "redis_host") (cfg "redis_port"))))
 (def *redis*  (StrictRedis (cfg "redis_host") (cfg "redis_port")))
 (def *mongo*  (MongoClient (cfg "mongo_host") (cfg "mongo_port")))
 (def *db*     (. *mongo* [(cfg "mongo_dbname")] [(cfg "mongo_collection")]))
 
-(def task (. celery task))
+(def task (. *celery* task))
 (def href-re (.compile re "href=['\"](.+)['\"]"))
 (def head-re (.compile re "<head>.*</head>"))
 (def tag-re (.compile re "<.*?>"))
@@ -31,7 +30,7 @@
                  (.timestamp)))
 
 (defn report-done! [url]
-  (. hset *redis* url (unicode (now))))
+  (.hset *redis* url (unicode (now))))
 
 (defn content-care? [response]
   ;; Checks response to see if it is a content type we care about.
@@ -97,7 +96,6 @@
 
 (with-decorator task
   (defn process [url]
-    ;; TODO switch to stream format
     (with [[resp (closing (streaming-get url))]]
           (if (not (response-care? resp))
             (report-done! url)
