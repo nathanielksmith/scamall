@@ -12,13 +12,14 @@
 
 (import [scamall.cfg [cfg]])
 
-(def *celery* (Celery "crawl" (.format "redis://{}:{}" (cfg "redis_host") (cfg "redis_port"))))
+(def *celery* (apply Celery ["crawl"] {"broker" (.format "redis://{}:{}" (cfg "redis_host") (cfg "redis_port"))}))
 (def *redis*  (StrictRedis (cfg "redis_host") (cfg "redis_port")))
 (def *mongo*  (MongoClient (cfg "mongo_host") (cfg "mongo_port")))
 (def *db*     (. *mongo* [(cfg "mongo_dbname")] [(cfg "mongo_collection")]))
 
 (def task (. *celery* task))
-(def href-re (.compile re "href=['\"](.+)['\"]"))
+;(def href-re (.compile re "href=['\"](.+)['\"]"))
+(def href-re "href=['\"](.+)['\"]")
 (def head-re (.compile re "<head>.*</head>"))
 (def tag-re (.compile re "<.*?>"))
 
@@ -30,7 +31,7 @@
                  (.timestamp)))
 
 (defn report-done! [url]
-  (.hset *redis* url (unicode (now))))
+  (.hset *redis* "urlfrontier" url (str (now))))
 
 (defn content-care? [response]
   ;; Checks response to see if it is a content type we care about.
@@ -80,7 +81,7 @@
   ;; but weirdness might happen if it is not. Perhaps just check to
   ;; see if it is plain text and take it wholesale; otherwise, assume
   ;; html
-  (let [[text (.text response)]]
+  (let [[text (. response text)]]
     (if (content= response "text/plain") ;; if not, we hope for html/xml
       text
       (extract-text-from-html text))))
@@ -99,10 +100,10 @@
     (with [[resp (closing (streaming-get url))]]
           (if (not (response-care? resp))
             (report-done! url)
-            (let [[urls (find-urls resp)]
+            (let [[urls (find-urls url resp)]
                   [text (to-text resp)]]
 
-              (for [url urls] (.publish *redis* "urls" url))
+              (for [u urls] (.publish *redis* "urls" u))
 
               (when (text-care? text)
                 (process-txt! text url *db*))
