@@ -19,19 +19,16 @@
 
 (def task (. *celery* task))
 ;(def href-re (.compile re "href=['\"](.+)['\"]"))
-(def href-re "href=['\"](.+)['\"]")
+(def href-re "href=['\"](.+?)['\"]")
 (def head-re (.compile re "<head>.*</head>"))
 (def tag-re (.compile re "<.*?>"))
-
-(defn process-txt! [&rest args]
-  ;; TODO stub until properly importing prosaic
-  nil)
 
 (defn now [] (-> (.utcnow datetime)
                  (.timestamp)))
 
 (defn report-done! [url]
-  (.hset *redis* "urlfrontier" url (str (now))))
+  (print "Reporting" url "done")
+  (.hset *redis* "urls_last_checked" url (str (now))))
 
 (defn content-care? [response]
   ;; Checks response to see if it is a content type we care about.
@@ -103,9 +100,14 @@
             (let [[urls (find-urls url resp)]
                   [text (to-text resp)]]
 
-              (for [u urls] (.publish *redis* "urls" u))
+              (print "Care about" url)
+              (print "Found text:" (slice text 0 80))
+
+              (for [u urls]
+                (print (+ "found url" u))
+                (.publish *redis* "urlfrontier" u))
 
               (when (text-care? text)
-                (process-txt! text url *db*))
+                (print (process-txt! text url *db*)))
 
               (report-done! url))))))
