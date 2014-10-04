@@ -1,1 +1,2 @@
-recursive-include scamall *.hy *.pyc
+recursive-include scamall *.hy
+recursive-include scamall/nltk_data *

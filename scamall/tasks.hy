@@ -99,13 +99,13 @@
                   [text (to-text resp)]]
 
               (print "Care about" url)
-              (print "Found text:" (slice text 0 80))
+              (print "Found text:" (slice text 0 800))
 
               (for [u urls]
-                (print (+ "found url" u))
+                (print (+ "found url " u))
                 (.publish *redis* "urlfrontier" u))
 
               (when (text-care? text)
-                (print (process-txt! text url *db*)))
+                (process-txt! text url *db*))
 
               (report-done! url))))))
