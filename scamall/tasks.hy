@@ -11,6 +11,7 @@
 (import requests)
 
 (import [scamall.cfg [cfg]])
+(import [scamall.lang [english?]])
 
 (def *celery* (apply Celery ["crawl"] {"broker" (.format "redis://{}:{}" (cfg "redis_host") (cfg "redis_port"))}))
 (def *redis*  (StrictRedis (cfg "redis_host") (cfg "redis_port")))
@@ -18,7 +19,6 @@
 (def *db*     (. *mongo* [(cfg "mongo_dbname")] [(cfg "mongo_collection")]))
 
 (def task (. *celery* task))
-;(def href-re (.compile re "href=['\"](.+)['\"]"))
 (def href-re "href=['\"](.+?)['\"]")
 (def head-re (.compile re "<head>.*</head>"))
 (def tag-re (.compile re "<.*?>"))
@@ -84,10 +84,8 @@
       (extract-text-from-html text))))
 
 (defn text-care? [text]
-  ;; Checks to see if text seems to be english
-  ;; Will likely use NLTK or an NLTK module
-  ;; TODO
-  true)
+  ;; For now, just the naive english function from scamall.lang
+  (english? text))
 
 (defn streaming-get [url]
   (apply .get [requests url] {"stream" True}))
