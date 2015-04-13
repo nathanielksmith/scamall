@@ -1,5 +1,7 @@
 class scamall::brain {
-  notify {'brainhi':
-    message => "I AM A BRAIN",
-  }
+  include '::rabbitmq'
+  include '::redis::install'
+  include '::mongodb'
+
+  include 'scamall::python'
 }

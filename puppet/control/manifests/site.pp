@@ -1,8 +1,4 @@
 node 'beren' {
-    include 'scamall::brain'
-
-    notify { 'hi':
-        message => "FOOBARBRAZ",
-    }
-
+  include 'scamall'
+  include 'scamall::brain'
 }

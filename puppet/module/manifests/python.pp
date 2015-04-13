@@ -1,4 +1,4 @@
-class python () {
+class scamall::python  {
   package { ['python3.4', 'virtualenv']:
     ensure => present,
   } ->
