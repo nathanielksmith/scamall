@@ -5,6 +5,6 @@ class scamall::python  {
   exec { 'mkvenv':
     command => '/usr/bin/virtualenv /home/scamall/scamall.venv -p /usr/bin/python3',
     creates => '/home/scamall/scamall.venv',
-    requires => [User['scamall']],
+    require => [User['scamall']],
   }
 }
